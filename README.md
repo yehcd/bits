@@ -14,17 +14,17 @@ BITS is intended to work with genomic coverage data resulting from NGS alignment
 
 1. From raw NGS data (e.g., Read1/2 FASTQ datafiles), perform alignment, deduplication, and coverage calculations as described in the publication Methods.
 
-2. If required, run a Cas-Offinder analysis for 0-4MM to the target sequence with position 8-9 CT motif for the relevant genome. Adjust "path_casoffinder_data" in "step1_combineCasoffinderBigwigs.Rmd" to point to the corresponding Cas-Offinder results datafile. 
+2. Thereafter, take the resulting bamCoverage ".bw" bigWig files and deposit them in:
+"./_step1_precompute/_input/".
 
-3. Thereafter, take the resulting bamCoverage ".bw" bigWig files and deposit them in:
-"./_step1_precompute/_input/". 
+3. If required, run a Cas-Offinder analysis for 0-4MM to the target sequence with position 8-9 CT motif for the relevant genome. Adjust "path_casoffinder_data" in "step1_combineCasoffinderBigwigs.Rmd" to point to the corresponding Cas-Offinder results datafile. 
 
 4. Run the Rnotebook "./step1_combineCasoffinderBigwigs.Rmd". This generates ".Rds.gz" datafiles that will be deposited in "./_step1_precompute/_output/".
 
 5. Modify the analysis manifest file "./_step2_getHits/manifest.csv", if necessary. A pre-filled example is already included. The 3 columns in order are: 
-	(i) Step1 output for the untransfected background
-	(ii) Step1 output for the transfected sample
-	(iii) gRNA sequence to use for analysis. This should be the same as used in CasOFFinder ("./_resources/casoffinder_14bp_sequences_4mm.out.gz")
+    * Step1 output for the untransfected background
+    * Step1 output for the transfected sample
+    * gRNA sequence to use for analysis. This should be the same as used in CasOFFinder (e.g., "./_resources/casoffinder_14bp_sequences_4mm.out.gz")
 
 6. Run the Rnotebook "./step2_findHits.Rmd". The results will be deposited in "./_step2_getHits/_output".
 
