@@ -1,0 +1,94 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+
+***
+Run this entire Rnotebook to perform extraction of CasOFFinder sites from BigWig datafiles. 
+
+NOTE: this is very memory intensive (requires 32~64GB RAM). 
+
+
+LIBRARIES
+```{r}
+source("./_resources/basicFunctions_v2.R")
+
+```
+
+
+Load basic data for CasOffinder & initial pre-processing of data to construct ranges for analysis
+```{r}
+# read datafile & apply basic check for position 8-9 CT
+path_casoffinder_data <- "./_resources/casoffinder_14bp_sequences_4mm.out.gz"
+
+
+tb_casoffinder <- vroom(
+  file = path_casoffinder_data,
+  col_names = c(
+    "gRNA_query",
+    "target_chr",
+    "target_position",
+    "target_seq",
+    "target_strand",
+    "mm_count"
+  )
+) %>% mutate(CT_match = check_CT_match(string = target_seq, positions = c(8, 9)))
+
+
+# make GRanges, resize to a quantification window of CT-centered +/- 500bps
+gr_casoffinder <- tb_casoffinder %>%  make_casoffinder_granges() %>% GenomicRanges::resize(width = 1000, fix = "center")
+
+
+# # check output
+# gr_casoffinder
+
+
+
+#
+# Loop through input bigwigs and extract data from sites defined by CasOFFinder results
+
+# get bigwig file paths
+path_bigwigs <- "./_step1_precompute/_input/"
+list_bigwigs <- list.files(path = path_bigwigs,
+                         pattern = "*.cov.bw",
+                         full.names = TRUE)
+
+# check
+list_bigwigs
+
+
+#
+# combine bigwigs and CasOffinder and output to Rdata files
+output_Rdata <- "./_step1_precompute/_output/"
+
+map(.x = list_bigwigs,
+    .f = ~combine_bigwig_casoffinder(
+      input_bigwig = .x,
+      output_dir = output_Rdata,
+      gr_casoffinder = gr_casoffinder
+    ))
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,118 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+
+
+***
+Run this entire Rnotebook to perform background subtraction & scoring from sample pairs for treated vs. untreated followed by thresholding and extraction for 'hits'.
+
+
+LIBRARIES
+```{r}
+source("./_resources/basicFunctions_v2.R")
+
+```
+
+
+MAIN ACTION
+```{r}
+#
+# LOAD generic blacklists for both ENCODE & CUT&RUN
+
+# file locations
+file_blacklist_cr <- "./_resources/blacklist/13059_2023_3027_MOESM2_ESM_hg38.csv"
+file_blacklist_encode <- "./_resources/blacklist/ENCFF356LFX.bed.gz"
+
+# make GRanges of blacklist
+gr_blacklist_cr <- vroom(file = file_blacklist_cr) %>% makeGRangesFromDataFrame(
+  keep.extra.columns = TRUE,
+  ignore.strand = TRUE,
+  seqnames.field = "chr",
+  start.field = "start",
+  end.field = "end"
+)
+
+gr_blacklist_encode <- vroom(file = file_blacklist_encode,col_names = c("seqname", "start", "end")) %>% makeGRangesFromDataFrame(
+  keep.extra.columns = TRUE,
+  ignore.strand = TRUE,
+  seqnames.field = "seqname",
+  start.field = "start",
+  end.field = "end"
+)
+
+# merge & reduce into final blacklist
+gr_blacklist_merged <- c(gr_blacklist_cr, gr_blacklist_encode) %>% GenomicRanges::reduce()
+
+
+#
+# COMPUTE SITE SCORES, FILTER, AND OUTPUT
+
+# params
+manifest <- vroom(file = "./_step2_getHits/manifest.csv")
+input_dir <- "./_step1_precompute/_output/"
+output_dir <- "./_step2_getHits/_output/"
+
+# get filtered hits & save results
+purrr::pmap(
+  .l = manifest,
+  .f = ~ do_analysis(
+    file_background_rds = ..1,
+    file_sample_rds = ..2,
+    guide_seq = ..3,
+    gr_blacklist = gr_blacklist_merged,
+    input_dir = input_dir,
+    output_dir = output_dir,
+    score_threshold = 30,
+    CT_filter = TRUE
+  )
+)
+
+
+
+#
+# MAKE SUMMARY DNA SEQUENCE LOGOS
+
+# get filenames
+list_files <- list.files(path = output_dir, pattern = "*.csv", full.names = TRUE)
+list_files
+
+# main action
+for (i in 1:length(list_files)) {
+  # load data
+  tb_data <- vroom(list_files[i], col_names = TRUE)
+  
+  #
+  # MAKE ggseqlogo w/ 'bits' scaling
+  gg_seqlogo <- ggseqlogo(
+    data = toupper(tb_data$target_seq),
+    method = 'bits',
+    seq_type = "dna"
+  )
+  
+  
+  # save output
+  outputFile <- paste0(output_dir, basename(list_files[i]), "_bits_n", nrow(tb_data))
+  
+  outputFile_plot <- paste0(outputFile, ".pdf")
+  ggsave(
+    filename = outputFile_plot,
+    plot = gg_seqlogo,
+    device = "pdf",
+    width = 6,
+    height = 2
+  )
+}
+
+```
+
+
+
+
+
+
