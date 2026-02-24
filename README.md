@@ -5,7 +5,7 @@ BITS is a simple tool for analyzing next-generation sequencing (NGS) data from C
 BITS is associated with the following publication:
 
 >**Programmable genome editing in human cells using RNA-guided bridge recombinases**<br>
->Pelea et al., *Science* (2026)
+>[Pelea et al., *Science* (2026)](https://doi.org/10.1126/science.adz1884)
 
 Please see the corresponding [Schwank Lab GitHub repository](https://github.com/Schwank-Lab/ISCro4_Pelea_2026) for additional code and analyses associated with this manuscript.
 
